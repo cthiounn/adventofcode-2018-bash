@@ -6,31 +6,24 @@ part1() {
 		do
 			let frequency=$frequency$line 
 		done < input/day1-input.file 
-	echo "$frequency"
+	echo "$frequency" | tee output/day1-output.file
 }
 
 part2() {
 	let frequency=0
-	if [ -f day1-buffer.tmp ]; then
-		rm day1-buffer.tmp
-	fi
-	touch day1-buffer.tmp 
+	declare -A tab_number
 	while [ true ]
 	do
 		while read line || [ -n "$line" ] ;
 			do
 				let frequency=$frequency$line
-				grep ^$frequency$ day1-buffer.tmp > /dev/null
-				if [[ $? -eq 0 ]]; then
-					echo "$frequency";
-					rm day1-buffer.tmp
+				if [[ $((tab_number[$frequency])) -eq 1 ]]; then
+					echo "$frequency" | tee -a output/day1-output.file;
 					exit;
 				fi
-				echo "$frequency" >> day1-buffer.tmp
+				tab_number[$frequency]=1
 			done < input/day1-input.file 
 	done
-	echo "$frequency"
-	rm day1-buffer.tmp
 }
 
 case "$1" in
@@ -41,6 +34,7 @@ case "$1" in
 		part2
 		;;
 	*)
-		echo "Usage : $0 {part1|part2}"
+		part1
+		part2
 		;;
 esac
