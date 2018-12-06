@@ -1,55 +1,62 @@
 #!/bin/sh
-# NON FONCTIONAL
 
-part1() {
+part1and2() {
+	cat input/day4-input.file | sort > day4-tmp.tmp
 	declare -A tab_total_sleep
 	declare -A tab_total_sleep_by_minute
 	dateSleep=""
+	hourSleep=""
+	minSleep=""
 	guard_number=""
+	guard="Guard"
+	falls="falls"
+	wakes="wakes"
 	while read line || [ -n "$line" ] ; 
-		do 
-			read -r date hour type number _ <<< "${line}"
-			date="${date/'['}"
-            hour="${hour/']'}"
-            if [ "$type" == "Guard" ]
-				then guard_number="${number/'#'}"
-			elif [ "$type" == "falls" ] 
-				then dateSleep="$date $hour"
-			elif [ "$type" == "wakes" ] 
-				then total=1;
-				tab_total_sleep[$guard_number]=$(( tab_total_sleep[$guard_number] + $total ))
+		do
+			read -r date hourmin type number _ <<< "${line}"
+			date="${date//'['}"
+            hourmin="${hourmin//']'}"
+			hour="${hourmin:0:2}"
+			min="${hourmin:3:2}"
+			min="${min#0}"
+            if [ "$type" = "$guard" ];
+				then guard_number="${number//'#'}"; number="in"; dateSleep="" ; hourSleep="" ; minSleep="" ;
+			elif [ "$type" = "$falls" ];
+				then dateSleep="$date"; hourSleep="$hour"; minSleep="$min";
+			elif [ "$type" = "$wakes" ];
+				then 
+				if [ "$dateSleep" = "$date" ] && [ "$hourSleep" = "$hour" ];
+					then total=$(( min - minSleep ));
+						tab_total_sleep[$guard_number]=$(( tab_total_sleep[$guard_number] + total )); 
+						for i in $(seq "$minSleep" "$(( min - 1 ))")
+							do tab_total_sleep_by_minute[$guard_number"*"$i]=$(( tab_total_sleep_by_minute[$guard_number"*"$i] + 1 )) ; done;
+				fi
 			fi
-			echo "$date $hour $number"
-		done < input/day4-input.file | sort
-		echo ${tab_total_sleep[@]} | tee output/day4-output.file
-}
-
-part2() {
-	declare -A tab_number
-#	while read line || [ -n "$line" ] ;
-#		do
-#			IFS="," read -r  ident x y len width <<<$(echo "$line" | sed -re 's/(@|:|x)/,/g'| sed -re 's/(#| )//g')
-#			for i in `seq 1 $len`;
-#			do
-#				for j in `seq 1 $width`;
-#				do
-#					position="$(($x+$i-1))"*"$(($y+$j-1))"
-#					tab_number[$position]=tab_number[$position]$ident';'
-#				done
-#			done
-#		done < input/day4-input.file
-#		echo ${tab_number[$@]} | tee output/day4-output.file
+		done < day4-tmp.tmp
+	max_sleep=0
+	sleepiest_guard=""
+	max_min=0
+	min_asleep=0
+	max_max_minu=0
+	max_minu_asleep=0
+	for i in "${!tab_total_sleep[@]}"
+	do	
+		sleep="${tab_total_sleep[$i]}";
+		[[ "$sleep" -gt "$max_sleep" ]] && max_sleep="$sleep" && sleepiest_guard="$i"
+	done
+	
+	for i in "${!tab_total_sleep_by_minute[@]}"
+	do
+		[[ "$i" == $sleepiest_guard* ]] && [[ "${tab_total_sleep_by_minute[$i]}" -gt "$max_min" ]] && max_min="${tab_total_sleep_by_minute[$i]}" && min_asleep="$i";
+		[[ "${tab_total_sleep_by_minute[$i]}" -gt "$max_max_minu" ]] && max_max_minu="${tab_total_sleep_by_minute[$i]}" && max_minu_asleep="$i"
+	done
+	echo "$(( min_asleep ))" | tee output/day4-output.file
+	echo "$(( max_minu_asleep ))" | tee -a output/day4-output.file
+	rm day4-tmp.tmp
 }
 
 case "$1" in
-	part1)
-		part1
-		;;
-	part2)
-		part2
-		;;
 	*)
-		part1
-		part2
+		part1and2
 		;;
 esac
