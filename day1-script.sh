@@ -1,23 +1,23 @@
 #!/bin/sh
 
 part1() {
-	let frequency=0
+	frequency=0
 	while read line || [ -n "$line" ];
 		do
-			let frequency=$frequency$line 
+			frequency=$(( $frequency$line ))
 		done < input/day1-input.file 
 	echo "$frequency" | tee output/day1-output.file
 }
 
 part2() {
-	let frequency=0
+	frequency=0
 	declare -A tab_number
-	while [ true ]
+	while  true 
 	do
 		while read line || [ -n "$line" ] ;
 			do
-				let frequency=$frequency$line
-				if [[ $((tab_number[$frequency])) -eq 1 ]]; then
+				frequency=$(( $frequency$line ))
+				if [ $((tab_number[$frequency])) -eq 1 ]; then
 					echo "$frequency" | tee -a output/day1-output.file;
 					exit;
 				fi
